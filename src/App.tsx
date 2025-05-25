@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './App.css';
 import { database } from './firebase';
-import { ref, onValue, set, remove } from 'firebase/database';
+import { ref, onValue, set, remove, Database } from 'firebase/database';
 
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -84,49 +84,71 @@ const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
 const App: React.FC = () => {
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [selectedColor] = useState(markerColors[Math.floor(Math.random() * markerColors.length)]);
+  const [dbStatus, setDbStatus] = useState<string>('Initializing...');
 
   // Subscribe to real-time updates
   useEffect(() => {
-    console.log('Setting up Firebase listener');
-    const markersRef = ref(database, 'markers');
-    
-    const unsubscribe = onValue(markersRef, (snapshot) => {
-      console.log('Received Firebase update:', snapshot.val());
-      const data = snapshot.val();
-      if (data) {
-        const markersArray = Object.values(data) as MarkerData[];
-        console.log('Setting markers:', markersArray);
-        setMarkers(markersArray);
-      } else {
-        console.log('No markers in database, setting empty array');
-        setMarkers([]);
-      }
-    }, (error) => {
-      console.error('Firebase error:', error);
-    });
+    try {
+      console.log('Setting up Firebase listener');
+      const markersRef = ref(database, 'markers');
+      console.log('Created markers reference');
+      
+      const unsubscribe = onValue(markersRef, (snapshot) => {
+        console.log('Received Firebase update:', snapshot.val());
+        const data = snapshot.val();
+        if (data) {
+          const markersArray = Object.values(data) as MarkerData[];
+          console.log('Setting markers:', markersArray);
+          setMarkers(markersArray);
+          setDbStatus('Connected');
+        } else {
+          console.log('No markers in database, setting empty array');
+          setMarkers([]);
+          setDbStatus('Connected (no markers)');
+        }
+      }, (error) => {
+        console.error('Firebase error:', error);
+        setDbStatus('Error: ' + error.message);
+      });
 
-    // Cleanup subscription
-    return () => unsubscribe();
+      return () => {
+        console.log('Cleaning up Firebase listener');
+        unsubscribe();
+      };
+    } catch (error) {
+      console.error('Error in useEffect:', error);
+      setDbStatus('Error: ' + (error as Error).message);
+    }
   }, []);
 
   const handleMapClick = (e: L.LeafletMouseEvent) => {
-    console.log('Handling map click:', e.latlng);
-    const newMarker: MarkerData = {
-      id: Date.now().toString(),
-      position: [e.latlng.lat, e.latlng.lng],
-      color: selectedColor,
-    };
+    try {
+      console.log('Handling map click:', e.latlng);
+      const newMarker: MarkerData = {
+        id: Date.now().toString(),
+        position: [e.latlng.lat, e.latlng.lng],
+        color: selectedColor,
+      };
 
-    console.log('Creating new marker:', newMarker);
-    
-    // Save to Firebase
-    set(ref(database, `markers/${newMarker.id}`), newMarker)
-      .then(() => {
-        console.log('Marker saved successfully to Firebase');
-      })
-      .catch((error) => {
-        console.error('Error saving marker to Firebase:', error);
-      });
+      console.log('Creating new marker:', newMarker);
+      
+      // Save to Firebase
+      const markerRef = ref(database, `markers/${newMarker.id}`);
+      console.log('Created marker reference');
+      
+      set(markerRef, newMarker)
+        .then(() => {
+          console.log('Marker saved successfully to Firebase');
+          setDbStatus('Marker saved');
+        })
+        .catch((error) => {
+          console.error('Error saving marker to Firebase:', error);
+          setDbStatus('Error saving: ' + error.message);
+        });
+    } catch (error) {
+      console.error('Error in handleMapClick:', error);
+      setDbStatus('Error: ' + (error as Error).message);
+    }
   };
 
   const handleDeleteMarker = (markerId: string) => {
@@ -157,6 +179,18 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <div className="map-container">
+        <div style={{ 
+          position: 'absolute', 
+          top: 10, 
+          right: 10, 
+          zIndex: 1000, 
+          background: 'white', 
+          padding: '5px 10px', 
+          borderRadius: '4px',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+        }}>
+          Database: {dbStatus}
+        </div>
         <MapContainer
           center={[20, 0]}
           zoom={2}
