@@ -12,7 +12,7 @@
 }
 
 .custom-pin {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 
 .leaflet-container {
@@ -20,6 +20,15 @@
   height: 100%;
   z-index: 1;
   position: relative;
+  cursor: crosshair !important;
+}
+
+.leaflet-grab {
+  cursor: crosshair !important;
+}
+
+.leaflet-dragging .leaflet-grab {
+  cursor: move !important;
 }
 
 .leaflet-div-icon {

@@ -47,9 +47,21 @@ const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
   const map = useMapEvents({
     click: (e) => {
       console.log('Map clicked at:', e.latlng);
+      map.dragging.disable();
       onMapClick(e);
+      setTimeout(() => {
+        map.dragging.enable();
+      }, 100);
     },
   });
+
+  useEffect(() => {
+    if (map) {
+      const container = map.getContainer();
+      container.style.cursor = 'crosshair';
+    }
+  }, [map]);
+
   return null;
 };
 
@@ -71,6 +83,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleMapClick = (e: L.LeafletMouseEvent) => {
+    console.log('Handling map click:', e.latlng);
     const newMarker: MarkerData = {
       id: Date.now().toString(),
       position: [e.latlng.lat, e.latlng.lng],
