@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
+import { getDatabase, ref, onValue } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDGHxjCHHPy9LmD9ZJBUvLYV4QnWTtUfJ4",
@@ -8,8 +8,21 @@ const firebaseConfig = {
   projectId: "wereldkaart-kerk",
   storageBucket: "wereldkaart-kerk.appspot.com",
   messagingSenderId: "525722143021",
-  appId: "1:525722143021:web:b8d9b8f8f8f8f8f8f8f8f8"
+  appId: "1:525722143021:web:4b0d9b8f8f8f8f8f8f8f8f"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const database = getDatabase(app); 
+
+// Initialize Realtime Database and get a reference to the service
+export const database = getDatabase(app);
+
+// Add connection monitoring
+const connectedRef = ref(database, '.info/connected');
+onValue(connectedRef, (snap) => {
+  if (snap.val() === true) {
+    console.log('Connected to Firebase');
+  } else {
+    console.log('Not connected to Firebase');
+  }
+}); 

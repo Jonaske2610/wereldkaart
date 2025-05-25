@@ -87,15 +87,26 @@ const App: React.FC = () => {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    console.log('Setting up Firebase listener');
     const markersRef = ref(database, 'markers');
-    onValue(markersRef, (snapshot) => {
+    
+    const unsubscribe = onValue(markersRef, (snapshot) => {
+      console.log('Received Firebase update:', snapshot.val());
       const data = snapshot.val();
       if (data) {
-        setMarkers(Object.values(data));
+        const markersArray = Object.values(data) as MarkerData[];
+        console.log('Setting markers:', markersArray);
+        setMarkers(markersArray);
       } else {
+        console.log('No markers in database, setting empty array');
         setMarkers([]);
       }
+    }, (error) => {
+      console.error('Firebase error:', error);
     });
+
+    // Cleanup subscription
+    return () => unsubscribe();
   }, []);
 
   const handleMapClick = (e: L.LeafletMouseEvent) => {
@@ -108,24 +119,29 @@ const App: React.FC = () => {
 
     console.log('Creating new marker:', newMarker);
     
-    try {
-      // Save to Firebase
-      set(ref(database, `markers/${newMarker.id}`), newMarker)
-        .then(() => {
-          console.log('Marker saved successfully');
-        })
-        .catch((error) => {
-          console.error('Error saving marker:', error);
-        });
-    } catch (error) {
-      console.error('Error creating marker:', error);
-    }
+    // Save to Firebase
+    set(ref(database, `markers/${newMarker.id}`), newMarker)
+      .then(() => {
+        console.log('Marker saved successfully to Firebase');
+      })
+      .catch((error) => {
+        console.error('Error saving marker to Firebase:', error);
+      });
   };
 
   const handleDeleteMarker = (markerId: string) => {
+    console.log('Deleting marker:', markerId);
     // Remove from Firebase
-    remove(ref(database, `markers/${markerId}`));
+    remove(ref(database, `markers/${markerId}`))
+      .then(() => {
+        console.log('Marker deleted successfully from Firebase');
+      })
+      .catch((error) => {
+        console.error('Error deleting marker from Firebase:', error);
+      });
   };
+
+  console.log('Current markers:', markers);
 
   const createCustomIcon = (color: string) => {
     return L.divIcon({
@@ -154,34 +170,37 @@ const App: React.FC = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={marker.position}
-              icon={createCustomIcon(marker.color)}
-            >
-              <Popup>
-                <div>
-                  Je bent hier geweest!
-                  <br />
-                  <button 
-                    onClick={() => handleDeleteMarker(marker.id)}
-                    style={{ 
-                      marginTop: '10px',
-                      padding: '5px 10px',
-                      backgroundColor: '#ff4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Verwijder pin
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {markers && markers.length > 0 && markers.map((marker) => {
+            console.log('Rendering marker:', marker);
+            return (
+              <Marker
+                key={marker.id}
+                position={marker.position}
+                icon={createCustomIcon(marker.color)}
+              >
+                <Popup>
+                  <div>
+                    Je bent hier geweest!
+                    <br />
+                    <button 
+                      onClick={() => handleDeleteMarker(marker.id)}
+                      style={{ 
+                        marginTop: '10px',
+                        padding: '5px 10px',
+                        backgroundColor: '#ff4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Verwijder pin
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
     </div>
