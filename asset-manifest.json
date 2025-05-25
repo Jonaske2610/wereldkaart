@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/wereldkaart/static/css/main.cbef6f2f.css",
-    "main.js": "/wereldkaart/static/js/main.bf8b40c1.js",
+    "main.js": "/wereldkaart/static/js/main.fe427d0c.js",
     "index.html": "/wereldkaart/index.html",
     "main.cbef6f2f.css.map": "/wereldkaart/static/css/main.cbef6f2f.css.map",
-    "main.bf8b40c1.js.map": "/wereldkaart/static/js/main.bf8b40c1.js.map"
+    "main.fe427d0c.js.map": "/wereldkaart/static/js/main.fe427d0c.js.map"
   },
   "entrypoints": [
     "static/css/main.cbef6f2f.css",
-    "static/js/main.bf8b40c1.js"
+    "static/js/main.fe427d0c.js"
   ]
 }
