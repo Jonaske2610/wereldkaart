@@ -44,8 +44,11 @@ interface MapEventsProps {
 }
 
 const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
-  useMapEvents({
-    click: onMapClick,
+  const map = useMapEvents({
+    click: (e) => {
+      console.log('Map clicked at:', e.latlng);
+      onMapClick(e);
+    },
   });
   return null;
 };
@@ -101,6 +104,9 @@ const App: React.FC = () => {
           center={[20, 0]}
           zoom={2}
           style={{ height: '100vh', width: '100%' }}
+          doubleClickZoom={false}
+          dragging={true}
+          scrollWheelZoom={true}
         >
           <MapEvents onMapClick={handleMapClick} />
           <TileLayer
