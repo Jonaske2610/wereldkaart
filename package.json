@@ -2,17 +2,18 @@
   "name": "wereldkaart",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://[YOUR_GITHUB_USERNAME].github.io/wereldkaart",
+  "homepage": "https://jonaske2610.github.io/wereldkaart",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
+    "@types/leaflet": "^1.9.8",
     "@types/node": "^16.18.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "firebase": "^11.8.1",
     "leaflet": "^1.9.4",
-    "@types/leaflet": "^1.9.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
@@ -49,4 +50,4 @@
   "devDependencies": {
     "gh-pages": "^6.1.1"
   }
-} 
+}

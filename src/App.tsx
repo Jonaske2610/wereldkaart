@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './App.css';
+import { database } from './firebase';
+import { ref, onValue, set, remove } from 'firebase/database';
 
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -37,9 +39,33 @@ interface MarkerData {
   color: string;
 }
 
-function App() {
+interface MapEventsProps {
+  onMapClick: (e: L.LeafletMouseEvent) => void;
+}
+
+const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
+  useMapEvents({
+    click: onMapClick,
+  });
+  return null;
+};
+
+const App: React.FC = () => {
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [selectedColor] = useState(markerColors[Math.floor(Math.random() * markerColors.length)]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const markersRef = ref(database, 'markers');
+    onValue(markersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setMarkers(Object.values(data));
+      } else {
+        setMarkers([]);
+      }
+    });
+  }, []);
 
   const handleMapClick = (e: L.LeafletMouseEvent) => {
     const newMarker: MarkerData = {
@@ -48,7 +74,13 @@ function App() {
       color: selectedColor,
     };
 
-    setMarkers([...markers, newMarker]);
+    // Save to Firebase
+    set(ref(database, `markers/${newMarker.id}`), newMarker);
+  };
+
+  const handleDeleteMarker = (markerId: string) => {
+    // Remove from Firebase
+    remove(ref(database, `markers/${markerId}`));
   };
 
   const createCustomIcon = (color: string) => {
@@ -69,8 +101,8 @@ function App() {
           center={[20, 0]}
           zoom={2}
           style={{ height: '100vh', width: '100%' }}
-          onClick={handleMapClick}
         >
+          <MapEvents onMapClick={handleMapClick} />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -82,7 +114,24 @@ function App() {
               icon={createCustomIcon(marker.color)}
             >
               <Popup>
-                Je bent hier geweest!
+                <div>
+                  Je bent hier geweest!
+                  <br />
+                  <button 
+                    onClick={() => handleDeleteMarker(marker.id)}
+                    style={{ 
+                      marginTop: '10px',
+                      padding: '5px 10px',
+                      backgroundColor: '#ff4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Verwijder pin
+                  </button>
+                </div>
               </Popup>
             </Marker>
           ))}
@@ -90,6 +139,6 @@ function App() {
       </div>
     </div>
   );
-}
+};
 
 export default App; 
