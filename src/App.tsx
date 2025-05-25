@@ -47,21 +47,37 @@ const MapEvents: React.FC<MapEventsProps> = ({ onMapClick }) => {
   const map = useMapEvents({
     click: (e) => {
       console.log('Map clicked at:', e.latlng);
-      map.dragging.disable();
-      onMapClick(e);
-      setTimeout(() => {
-        map.dragging.enable();
-      }, 100);
+      if (map) {
+        const container = map.getContainer();
+        container.style.cursor = 'crosshair';
+        onMapClick(e);
+      }
     },
-  });
-
-  useEffect(() => {
-    if (map) {
-      const container = map.getContainer();
-      container.style.cursor = 'crosshair';
+    mouseover: () => {
+      if (map) {
+        const container = map.getContainer();
+        container.style.cursor = 'crosshair';
+      }
+    },
+    mouseout: () => {
+      if (map) {
+        const container = map.getContainer();
+        container.style.cursor = 'grab';
+      }
+    },
+    mousedown: () => {
+      if (map) {
+        const container = map.getContainer();
+        container.style.cursor = 'grabbing';
+      }
+    },
+    mouseup: () => {
+      if (map) {
+        const container = map.getContainer();
+        container.style.cursor = 'crosshair';
+      }
     }
-  }, [map]);
-
+  });
   return null;
 };
 
@@ -90,8 +106,20 @@ const App: React.FC = () => {
       color: selectedColor,
     };
 
-    // Save to Firebase
-    set(ref(database, `markers/${newMarker.id}`), newMarker);
+    console.log('Creating new marker:', newMarker);
+    
+    try {
+      // Save to Firebase
+      set(ref(database, `markers/${newMarker.id}`), newMarker)
+        .then(() => {
+          console.log('Marker saved successfully');
+        })
+        .catch((error) => {
+          console.error('Error saving marker:', error);
+        });
+    } catch (error) {
+      console.error('Error creating marker:', error);
+    }
   };
 
   const handleDeleteMarker = (markerId: string) => {
@@ -116,7 +144,7 @@ const App: React.FC = () => {
         <MapContainer
           center={[20, 0]}
           zoom={2}
-          style={{ height: '100vh', width: '100%' }}
+          style={{ height: '100vh', width: '100%', cursor: 'crosshair' }}
           doubleClickZoom={false}
           dragging={true}
           scrollWheelZoom={true}
