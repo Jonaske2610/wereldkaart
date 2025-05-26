@@ -217,7 +217,10 @@ const App: React.FC = () => {
                     Je bent hier geweest!
                     <br />
                     <button 
-                      onClick={() => handleDeleteMarker(marker.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();  // Stop the event from reaching the map
+                        handleDeleteMarker(marker.id);
+                      }}
                       style={{ 
                         marginTop: '10px',
                         padding: '5px 10px',
